@@ -30,7 +30,8 @@ export default function Session({onEnd}) {
         setActiveColumnIndex,
         columnsEachRow: totalQuestions,
         delayBetweenColumnsInMilliseconds: delayBetweenQuestionsInMilliseconds,
-        activeRowIndex
+        activeRowIndex,
+        playbackRate: appContext.config.playbackRate
     }), [activeColumnIndex, totalQuestions]);
     const isEnd = session.end.length > 0;
     const isWaitingForAnswer = activeColumnIndex === totalQuestions && !isEnd;
@@ -40,12 +41,17 @@ export default function Session({onEnd}) {
     useEffect(onWaitingForAnswer(waitingForAnswerRef, isWaitingForAnswer), [isWaitingForAnswer]);
     const containerRef = useRef();
     useEffect(onMounted(containerRef, setContainerWidth), []);
-    useEffect(onSessionEnd(isEnd,onEnd), [isEnd]);
+    useEffect(onSessionEnd(isEnd, onEnd), [isEnd]);
+
+    const progress = Math.round(((activeRowIndex + 1) / questions.length) * 100);
     return <div ref={containerRef} className={styles.container}>
+        <div style={{width: '100%', position: 'absolute', top: 0, background: 'rgba(0,0,0,0.1)'}}>
+            <div style={{width: `${progress}%`, background: 'green', height: 10,transition:'width 1000ms ease-in-out'}}/>
+        </div>
         {questions.map((q, rowIndex) => {
             return <div key={rowIndex}>{q.map((n, colIndex) => {
-                return <audio key={`${rowIndex}-${colIndex}`} data-audio={`${rowIndex}-${colIndex}`} >
-                    <source src={`audio/${n}.wav`} type="audio/wav" />
+                return <audio key={`${rowIndex}-${colIndex}`} data-audio={`${rowIndex}-${colIndex}`}>
+                    <source src={`audio/${n}.wav`} type="audio/wav"/>
                     Your browser does not support the audio element.
                 </audio>
             })}</div>
@@ -98,7 +104,7 @@ const startNewQuestion = ({
                               activeColumnIndex,
                               setActiveColumnIndex,
                               columnsEachRow,
-                              delayBetweenColumnsInMilliseconds, activeRowIndex
+                              delayBetweenColumnsInMilliseconds, activeRowIndex, playbackRate
                           }) => () => {
     const audio = document.querySelector(`[data-audio="${activeRowIndex}-${activeColumnIndex}"]`);
 
@@ -110,7 +116,7 @@ const startNewQuestion = ({
                 }
             }, delayBetweenColumnsInMilliseconds);
         })
-        audio.playbackRate = 1.4;
+        audio.playbackRate = playbackRate;
         audio.play();
     } else {
         if (activeColumnIndex < columnsEachRow) {

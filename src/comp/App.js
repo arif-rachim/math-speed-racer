@@ -2,17 +2,17 @@ import React, {useCallback, useMemo, useState} from "react";
 import Session from "./Session";
 import styles from "./App.module.css";
 
-const SPEED_RACER = 'SPEED_RACER';
-const DEFAULT_CONTEXT = {
-    config: {
-        totalSums: 30,
-        questionsEachSum: 4,
-        digits: 3,
-        negativePercentage: 0,
-        delayBetweenQuestionsInMilliseconds: 500
-    },
-    sessions: []
-};
+const SPEED_RACER_CONFIG = 'speed-racer-config';
+const SPEED_RACER_SESSIONS = 'speed-racer-sessions';
+
+const DEFAULT_CONFIG = {
+    totalSums: 30,
+    questionsEachSum: 4,
+    digits: 3,
+    negativePercentage: 0,
+    delayBetweenQuestionsInMilliseconds: 500,
+    playbackRate : 1.1
+}
 
 const onStartSession = (setStartSession) => () => {
     setStartSession(true);
@@ -31,13 +31,18 @@ function createAppContextPersist(oldAppContext, setAppContext) {
             newContext = appContext(oldAppContext);
         }
         setAppContext(newContext);
-        localStorage.setItem(SPEED_RACER, JSON.stringify(newContext));
+        localStorage.setItem(SPEED_RACER_CONFIG,JSON.stringify(newContext.config));
+        localStorage.setItem(SPEED_RACER_SESSIONS,JSON.stringify(newContext.sessions));
     }
 }
 
 export default function App() {
 
-    const [appContext, setAppContext] = useState(JSON.parse(localStorage.getItem(SPEED_RACER) || JSON.stringify(DEFAULT_CONTEXT)));
+    const [appContext, setAppContext] = useState(() => {
+        const config = JSON.parse(localStorage.getItem(SPEED_RACER_CONFIG) || JSON.stringify(DEFAULT_CONFIG))
+        const sessions = JSON.parse(localStorage.getItem(SPEED_RACER_SESSIONS) || JSON.stringify([]))
+        return {config,sessions}
+    });
     const setAppContextPersist = useCallback(createAppContextPersist(appContext, setAppContext), [appContext]);
     const [startSession, setStartSession] = useState(false);
     return <AppContext.Provider value={useMemo(() => [appContext, setAppContextPersist], [appContext])}>
@@ -92,12 +97,14 @@ function HomePage({setStartSession,appContext}){
         </div>
         <div className={styles.tableContainer}>
         <table className={styles.table}>
+            <thead>
             <tr>
                 <th>No</th>
                 <th>Questions</th>
                 <th>Answers</th>
                 <th>Duration</th>
             </tr>
+            </thead>
             <tbody>
             {session?.questions?.map((q,index) => {
                 return <tr key={index}>
