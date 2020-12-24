@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/math-speed-racer/static/css/main.543d10e4.chunk.css",
+    "main.js": "/math-speed-racer/static/js/main.cd842fbc.chunk.js",
+    "main.js.map": "/math-speed-racer/static/js/main.cd842fbc.chunk.js.map",
+    "runtime-main.js": "/math-speed-racer/static/js/runtime-main.8f434904.js",
+    "runtime-main.js.map": "/math-speed-racer/static/js/runtime-main.8f434904.js.map",
+    "static/js/2.c0d6a7ec.chunk.js": "/math-speed-racer/static/js/2.c0d6a7ec.chunk.js",
+    "static/js/2.c0d6a7ec.chunk.js.map": "/math-speed-racer/static/js/2.c0d6a7ec.chunk.js.map",
+    "index.html": "/math-speed-racer/index.html",
+    "static/css/main.543d10e4.chunk.css.map": "/math-speed-racer/static/css/main.543d10e4.chunk.css.map",
+    "static/js/2.c0d6a7ec.chunk.js.LICENSE.txt": "/math-speed-racer/static/js/2.c0d6a7ec.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.8f434904.js",
+    "static/js/2.c0d6a7ec.chunk.js",
+    "static/css/main.543d10e4.chunk.css",
+    "static/js/main.cd842fbc.chunk.js"
+  ]
+}
