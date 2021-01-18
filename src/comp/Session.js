@@ -24,7 +24,7 @@ export default function Session({onEnd}) {
     let {questions} = session;
     questions = questions || [];
     const totalQuestions = questions && questions[activeRowIndex] && questions[activeRowIndex].length || 0;
-    useEffect(() => setActiveColumnIndex(0), [activeRowIndex])
+    useEffect(() => setActiveColumnIndex(0), [activeRowIndex]);
     useEffect(startNewQuestion({
         activeColumnIndex,
         setActiveColumnIndex,
@@ -32,7 +32,8 @@ export default function Session({onEnd}) {
         delayBetweenColumnsInMilliseconds: delayBetweenQuestionsInMilliseconds,
         activeRowIndex,
         playbackRate: appContext.config.playbackRate
-    }), [activeColumnIndex, totalQuestions]);
+    }), [activeColumnIndex,totalQuestions]);
+
     const isEnd = session.end.length > 0;
     const isWaitingForAnswer = activeColumnIndex === totalQuestions && !isEnd;
     const numberValue = getValue(questions, activeRowIndex, activeColumnIndex);
@@ -46,14 +47,26 @@ export default function Session({onEnd}) {
     const progress = Math.round(((activeRowIndex + 1) / questions.length) * 100);
     return <div ref={containerRef} className={styles.container}>
         <div style={{width: '100%', position: 'absolute', top: 0, background: 'rgba(0,0,0,0.1)'}}>
-            <div style={{width: `${progress}%`, background: 'green', height: 10,transition:'width 1000ms ease-in-out'}}/>
+            <div style={{
+                width: `${progress}%`,
+                background: 'green',
+                height: 10,
+                transition: 'width 1000ms ease-in-out'
+            }}/>
         </div>
         {questions.map((q, rowIndex) => {
             return <div key={rowIndex}>{q.map((n, colIndex) => {
-                return <audio key={`${rowIndex}-${colIndex}`} data-audio={`${rowIndex}-${colIndex}`}>
-                    <source src={`audio/${n}.wav`} type="audio/wav"/>
-                    Your browser does not support the audio element.
-                </audio>
+                const isNegative = n < 0;
+                return <div key={`${rowIndex}-${colIndex}`}>
+                    <audio data-audio={`${rowIndex}-${colIndex}`}>
+                        <source src={`audio/${n}.wav`} type="audio/wav"/>
+                        Your browser does not support the audio element.
+                    </audio>
+                    {isNegative && <audio data-audio={`${rowIndex}-${colIndex}-negative`}>
+                        <source src={`audio/1.wav`} type="audio/wav"/>
+                        Your browser does not support the audio element.
+                    </audio>}
+                </div>
             })}</div>
         })}
         <div style={{fontSize: containerWidth * 0.45}}>{numberValue}</div>
@@ -104,25 +117,32 @@ const startNewQuestion = ({
                               activeColumnIndex,
                               setActiveColumnIndex,
                               columnsEachRow,
-                              delayBetweenColumnsInMilliseconds, activeRowIndex, playbackRate
-                          }) => () => {
-    const audio = document.querySelector(`[data-audio="${activeRowIndex}-${activeColumnIndex}"]`);
+                              delayBetweenColumnsInMilliseconds, activeRowIndex, playbackRate}) => async () => {
+    const audioKey = `${activeRowIndex}-${activeColumnIndex}`;
+    const audio = document.querySelector(`[data-audio="${audioKey}"]`);
 
     if (audio) {
-        audio.addEventListener('ended', () => {
-            setTimeout(() => {
-                if (activeColumnIndex < columnsEachRow) {
-                    setActiveColumnIndex(activeColumnIndex + 1);
-                }
-            }, delayBetweenColumnsInMilliseconds);
-        })
-        audio.playbackRate = playbackRate;
-        audio.play();
+        await playAudio(audio,delayBetweenColumnsInMilliseconds,playbackRate);
+        if (activeColumnIndex < columnsEachRow) {
+            setActiveColumnIndex(activeColumnIndex + 1);
+        }
     } else {
         if (activeColumnIndex < columnsEachRow) {
             setActiveColumnIndex(activeColumnIndex + 1);
         }
     }
+}
+
+const playAudio = (audio,delay,playbackRate) => {
+    return new Promise(resolve => {
+        audio.addEventListener('ended', () => {
+            setTimeout(() => {
+                resolve(true);
+            }, delay);
+        },true);
+        audio.playbackRate = playbackRate;
+        audio.play();
+    });
 }
 
 
@@ -156,7 +176,15 @@ const initiateState = (appContext) => () => {
     // ok now we have the config lets open last session
     const unfinishedSessions = sessions.filter(s => 'end' in s && s.end.length === 0);
     if (unfinishedSessions && unfinishedSessions.length > 0) {
-        return unfinishedSessions[0];
+        // we need to replace all un-answered questions here
+        const unfinishedSession = unfinishedSessions[0];
+        const totalAnswers = unfinishedSession.answers.length;
+        const totalQuestions = unfinishedSession.questions.length;
+        unfinishedSession.questions.splice(totalAnswers, totalQuestions - totalAnswers, ...buildQuestions({
+            ...config,
+            totalSums: totalQuestions - totalAnswers
+        }));
+        return unfinishedSession;
     } else {
         return {
             start: new Date().toISOString(),

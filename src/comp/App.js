@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from "react";
+import React, {useCallback, useMemo, useState,useEffect} from "react";
 import Session from "./Session";
 import styles from "./App.module.css";
 
@@ -11,7 +11,7 @@ const DEFAULT_CONFIG = {
     digits: 3,
     negativePercentage: 0,
     delayBetweenQuestionsInMilliseconds: 500,
-    playbackRate : 1.1
+    playbackRate : 1.2
 }
 
 const onStartSession = (setStartSession) => () => {
@@ -36,6 +36,7 @@ function createAppContextPersist(oldAppContext, setAppContext) {
     }
 }
 
+
 export default function App() {
 
     const [appContext, setAppContext] = useState(() => {
@@ -44,6 +45,8 @@ export default function App() {
         return {config,sessions}
     });
     const setAppContextPersist = useCallback(createAppContextPersist(appContext, setAppContext), [appContext]);
+
+
     const [startSession, setStartSession] = useState(false);
     return <AppContext.Provider value={useMemo(() => [appContext, setAppContextPersist], [appContext])}>
         <div className={styles.container}>
@@ -107,15 +110,16 @@ function HomePage({setStartSession,appContext}){
             </thead>
             <tbody>
             {session?.questions?.map((q,index) => {
+                const hasTheAnswer = session.answers[index] > 0;
                 return <tr key={index}>
                     <td>{index+1}</td>
-                    <td>{q.join(',')}</td>
+                    <td>{hasTheAnswer ? q.join(',') : '-'}</td>
                     <td className={styles.tdAnswer}>
-                        <div className={styles.textCenter} >{session.answers[index]}</div>
+                        <div className={styles.textCenter} >{session.answers[index] || '-'}</div>
                         /
-                        <div className={styles.textCenter}>{session.answers[index]?q.reduce((tot,next) => tot + parseInt(next),0):''}</div>
+                        <div className={styles.textCenter}>{session.answers[index]?q.reduce((tot,next) => tot + parseInt(next),0):'-'}</div>
                     </td>
-                    <td>{session.durations[index]}</td>
+                    <td>{session.durations[index] || '-'}</td>
                 </tr>
             })}
             </tbody>
